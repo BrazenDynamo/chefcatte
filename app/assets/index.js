@@ -144,21 +144,21 @@ window.onload = function() {
             props: ['orders'],
             data: function() {
                 orderOptions = {};
-                for (order in this.orders)
-                    for (option in order.options) {
+                for (var order in this.orders)
+                    for (var option in order.options) {
                         orderOptions[option.name] = null;
                     }
                 return {
                     quantity: 1,
                     orderOptions: orderOptions,
-                }
+                };
             },
             methods: {
                 decrementQty: function() {
-                    quantity--;
+                    this.quantity--;
                 },
                 incrementQty: function() {
-                    quantity++;
+                    this.quantity++;
                 },
                 chooseOrderOption: function(optionName, event) {
                     options.optionName = event.target.value;
@@ -174,7 +174,7 @@ window.onload = function() {
                             <span>
                                 <span>Qty: </span>
                                 <button type="button"
-                                    v-show="quantity > 1"
+                                    :disabled="quantity <= 1"
                                     @click="decrementQty"
                                 >-</button>
                                 <span>{{ quantity }}</span>
@@ -222,7 +222,7 @@ window.onload = function() {
             convertCamelCase: function (string) {
                 return string
                     .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, function(str) {return str.toUpperCase()});
+                    .replace(/^./, function(str) {return str.toUpperCase();});
             },
         },
         methods: {
@@ -237,8 +237,8 @@ window.onload = function() {
                 this.orders.splice(this.orders.indexOf(items[id]), 1);
             },
             submit: function() {
-                for (order in this.orders) {
-                    for (option in order.options) {
+                for (var order in this.orders) {
+                    for (var option in order.options) {
                         if (option.value === null) {
                             alert('Please select your options');
                         }
@@ -271,4 +271,4 @@ window.onload = function() {
         `
     });
 
-}
+};
