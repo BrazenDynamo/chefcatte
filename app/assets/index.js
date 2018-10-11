@@ -1,120 +1,4 @@
 window.onload = function() {
-    var items = [
-            {
-                id: 0,
-                name: 'Japanese Vegetable Curry',
-                category: 'mains',
-                price: 125,
-                options: [
-                    { name: 'spiciness', values: ['mild', 'spicy', 'crying spicy'] }
-                ],
-                description: 'Potatoes, carrots, and eggplants in a tomato-based curry sauce'
-            },
-            {
-                id: 1,
-                name: 'Chicken Adobo',
-                category: 'mains',
-                price: 125,
-                options: [],
-                description: 'Chicken adobo with soft-boiled eggs'
-            },
-            {
-                id: 2,
-                name: 'Spring Rolls',
-                category: 'mains',
-                price: 100,
-                options: [
-                    { name: 'filling', values: ['tofu', 'smoked chicken'] }
-                ],
-                description: 'Cucumber, carrots, peanuts, cilantro, and tofu or smoked chicken filling wrapped in rice paper. Comes with peanut sauce'
-            },
-            {
-                id: 3,
-                name: 'Sweet Potato Cake',
-                category: 'baked',
-                price: 45,
-                options: [],
-                description: 'Baked sweet potato custard in a potato skin'
-            },
-            {
-                id: 4,
-                name: 'Hokkaido Rolls',
-                category: 'baked',
-                price: 45,
-                options: [],
-                description: 'Your white dinner roll but better'
-            },
-            {
-                id: 5,
-                name: 'Tangzhong Cinnamon Rolls',
-                category: 'baked',
-                price: 55,
-                options: [],
-                description: 'Giant swirled cinnamon rolls with frosting'
-            },
-            {
-                id: 6,
-                name: 'Pizza Rolls',
-                category: 'baked',
-                price: 55,
-                options: [],
-                description: 'Tomato, basil, cheese, and more cheese'
-            },
-            {
-                id: 7,
-                name: 'Fresh Pasta',
-                category: 'takeHomes',
-                price: 50,
-                options: [],
-                description: 'One serving is enough for one person. Swirl in boiling water for 3 minutes, then finish cooking in the sauce for 3 more minutes'
-            },
-            {
-                id: 8,
-                name: 'Tomato Sauce',
-                category: 'takeHomes',
-                price: 50,
-                options: [],
-                description: 'Sauce for your pasta'
-            },
-            {
-                id: 9,
-                name: 'Kimchi',
-                category: 'banChan',
-                price: 100,
-                options: [
-                    { name: 'spiciness', values: ['spicy', 'super spicy'] }
-                ],
-                description: 'Cabbage and other greens. Good for 4'
-            },
-            {
-                id: 10,
-                name: 'Braised Potato',
-                category: 'banChan',
-                price: 100,
-                options: [],
-                description: 'Baby potatoes in soy sauce and ssalyeot and roasted sesame seeds'
-            },
-            {
-                id: 11,
-                name: 'Japchae',
-                category: 'banChan',
-                price: 100,
-                options: [],
-                description: 'Carrots, cabbage, mung bean sprouts, and sesame seeds'
-            },
-            {
-                id: 12,
-                name: 'Kimchi Dumplings',
-                category: 'banChan',
-                price: 100,
-                options: [
-                    { name: 'cooking-method', values: ['steamed', 'fried'] }
-                ],
-                description: 'Dumplings stuffed with kimchi. 4 pieces'
-            }
-        ];
-    
-    var categories = ['mains', 'baked', 'takeHomes', 'banChan'];
 
     Vue.component('menu-category',
         {
@@ -141,70 +25,135 @@ window.onload = function() {
 
     Vue.component('order-list',
         {
-            props: ['orders'],
+            props: ['items'],
             data: function() {
                 orderOptions = {};
-                for (var order in this.orders)
+                for (var order in this.orders) {
                     for (var option in order.options) {
                         orderOptions[option.name] = null;
                     }
+                }
+                var orderItems = [];
+                for (var item in this.items) {
+                    var orderItem = {
+                        id: item.id,
+                        quantity: 1,
+                        options: item.options,
+                    };
+
+                    console.log(orderItem);
+                    console.log(item.options);
+                    orderItems.push({id: item.id, quantity: 1, options: item.options});
+                }
                 return {
-                    quantity: 1,
+                    orderList: this.items,
                     orderOptions: orderOptions,
                 };
             },
             methods: {
-                decrementQty: function() {
-                    this.quantity--;
+                getOrderById: function(id) {
+                    return this.orderList[this.orderList.map(order => order.id).indexOf(id)];
                 },
-                incrementQty: function() {
-                    this.quantity++;
+                increment: function(item) {
+                    item.quantity++;
+                    console.log(item.quantity);
                 },
-                chooseOrderOption: function(optionName, event) {
-                    options.optionName = event.target.value;
-                }
+                updateOptions: function(update) {
+                    this.getOrderById(update.id).orderOptions = update.options;
+                    alert(JSON.stringify(update.options));
+                },
+                removeItem: function(id) {
+                    this.orderList.splice(
+                        this.orderList.indexOf(this.getOrderById(id)),
+                        1
+                    );
+                },
+                submitOrder: function() {
+                    console.log(JSON.stringify(this.orderList));
+                    return;
+                },
             },
             template: `
+            <div>
                 <div class="order-list">
-                    <div class="order-item"
-                        v-for="order in orders"
-                    >
-                        <div class="order-item-header">
-                            <span><b>{{ order.name }}</b></span>
-                            <span>
-                                <span>Qty: </span>
-                                <button type="button"
-                                    :disabled="quantity <= 1"
-                                    @click="decrementQty"
-                                >-</button>
-                                <span>{{ quantity }}</span>
-                                <button type="button"
-                                    @click="incrementQty"
-                                >+</button>
-                                <button type="button"
-                                    @click="$emit('remove-item', order.id)"
-                                >Remove</button>
-                            </span>
-                        </div>
-                        <div class="order-item-options"
-                            v-for="option in order.options"
-                        >
-                            <span>{{ option.name }}: </span>
-                            <label
-                                v-for="optionValue in option.values"
-                            >
-                                <input type="radio"
-                                    :name="option.name"
-                                    :value="optionValue"
-                                    @change="chooseOrderOption(option.name, $event)"/>
-                                {{ optionValue }}
-                            </label>
-                        </div>
-                    </div>
+                    <order-item
+                        v-for="item in items"
+                        :order="item"
+                        :key="item.id"
+                        @increment="increment"
+                        @update-options="updateOptions"
+                        @remove-item="removeItem"></order-item>
                 </div>
+                <button @click="submitOrder">Submit</button>
+            </div>
             `
         }
     );
+
+    Vue.component('order-item', {
+        props: ['order'],
+        data: function() {
+            orderOptions = {};
+            for (var i = 0; i < this.order.options.length; i++) {
+                orderOptions[this.order.options[i].name] = null;
+            }
+            return {
+                quantity: 1,
+                orderOptions: orderOptions,
+            };
+        },
+        methods: {
+            decrementQty: function () {
+                this.quantity--;
+            },
+            incrementQty: function () {
+                this.quantity++;
+            },
+            // chooseOrderOption: function (optionName, event) {
+            //     options.optionName = event.target.value;
+            // }
+            debug: function() {
+                alert(JSON.stringify(this.orderOptions));
+            }
+        },
+        template: `
+            <div class="order-item">
+                <div class="order-item-header">
+                    <span><b>{{ order.name }}</b></span>
+                    <span>
+                        <span>Qty: </span>
+                        <button type="button"
+                            :disabled="quantity <= 1"
+                            @click="decrementQty"
+                        >-</button>
+                        <span>{{ quantity }}</span>
+                        <button type="button"
+                            @click="incrementQty"
+                        >+</button>
+                        <button type="button"
+                            @click="$emit('remove-item', order.id)"
+                        >Remove</button>
+                    </span>
+                </div>
+                <div class="order-item-options"
+                    v-for="(option) in order.options"
+                >
+                    <span>{{ option.name }}: </span>
+                    <label
+                        v-for="(optionValue, index) in option.values"
+                    >
+                        <input type="radio"
+                            :name="option.name"
+                            :value="index"
+                            v-model="orderOptions[option.name]"
+                            @change="$emit('update-options', {id: order.id, options: orderOptions})"/>
+                        {{ optionValue }}
+                    </label>
+                </div>
+                <button @click="debug">debug</button>
+            </div>
+        `,
+    }); 
     
     var app = new Vue({
         el: "#chefcatte",
@@ -263,7 +212,7 @@ window.onload = function() {
                 </div>
                 <hr v-show="orders.length > 0">
                 <order-list
-                    v-bind:orders="orders"
+                    v-bind:items="orders"
                     v-on:remove-item="removeOrderItem"
                 ></order-list>
                 <button @click="submit">hello!</button>
