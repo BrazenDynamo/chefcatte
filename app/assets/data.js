@@ -6,7 +6,6 @@ var items = [
         price: 125,
         options: [
             { name: 'spiciness', values: ['mild', 'spicy', 'crying spicy'] },
-            { name: 'yes?', values: ['mild', 'spicy', 'crying spicy'] }
         ],
         description: 'Potatoes, carrots, and eggplants in a tomato-based curry sauce'
     },

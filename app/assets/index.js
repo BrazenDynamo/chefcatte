@@ -3,9 +3,16 @@ window.onload = function() {
     Vue.component('menu-category',
         {
             props: ['category', 'items'],
+            filters: {
+                convertCamelCase: function (string) {
+                    return string
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, function (str) { return str.toUpperCase(); });
+                },
+            },
             template: `
                 <div class="menu-category">
-                    <h1>{{ category }}</h1>
+                    <h1>{{ category | convertCamelCase }}</h1>
                     <div class="menu-items"
                         v-for="item in items"
                     >
@@ -22,202 +29,171 @@ window.onload = function() {
             `
         }
     );
-
-    Vue.component('order-list',
-        {
-            props: ['items'],
-            data: function() {
-                orderOptions = {};
-                for (var order in this.orders) {
-                    for (var option in order.options) {
-                        orderOptions[option.name] = null;
-                    }
-                }
-                var orderItems = [];
-                for (var item in this.items) {
-                    var orderItem = {
-                        id: item.id,
-                        quantity: 1,
-                        options: item.options,
-                    };
-
-                    console.log(orderItem);
-                    console.log(item.options);
-                    orderItems.push({id: item.id, quantity: 1, options: item.options});
-                }
-                return {
-                    orderList: this.items,
-                    orderOptions: orderOptions,
-                };
-            },
-            methods: {
-                getOrderById: function(id) {
-                    return this.orderList[this.orderList.map(order => order.id).indexOf(id)];
-                },
-                increment: function(item) {
-                    item.quantity++;
-                    console.log(item.quantity);
-                },
-                updateOptions: function(update) {
-                    this.getOrderById(update.id).orderOptions = update.options;
-                    alert(JSON.stringify(update.options));
-                },
-                removeItem: function(id) {
-                    this.orderList.splice(
-                        this.orderList.indexOf(this.getOrderById(id)),
-                        1
-                    );
-                },
-                submitOrder: function() {
-                    console.log(JSON.stringify(this.orderList));
-                    return;
-                },
-            },
-            template: `
-            <div>
-                <div class="order-list">
-                    <order-item
-                        v-for="item in items"
-                        :order="item"
-                        :key="item.id"
-                        @increment="increment"
-                        @update-options="updateOptions"
-                        @remove-item="removeItem"></order-item>
-                </div>
-                <button @click="submitOrder">Submit</button>
-            </div>
-            `
-        }
-    );
-
-    Vue.component('order-item', {
-        props: ['order'],
-        data: function() {
-            orderOptions = {};
-            for (var i = 0; i < this.order.options.length; i++) {
-                orderOptions[this.order.options[i].name] = null;
-            }
-            return {
-                quantity: 1,
-                orderOptions: orderOptions,
-            };
-        },
-        methods: {
-            decrementQty: function () {
-                this.quantity--;
-            },
-            incrementQty: function () {
-                this.quantity++;
-            },
-            // chooseOrderOption: function (optionName, event) {
-            //     options.optionName = event.target.value;
-            // }
-            debug: function() {
-                alert(JSON.stringify(this.orderOptions));
+    
+    Vue.component('order-list', {
+        props: ['items'],
+        filters: {
+            capitalize: function(string) {
+                return string
+                    .replace(/^./, function(str) { return str.toUpperCase(); });
             }
         },
         template: `
-            <div class="order-item">
-                <div class="order-item-header">
-                    <span><b>{{ order.name }}</b></span>
-                    <span>
-                        <span>Qty: </span>
-                        <button type="button"
-                            :disabled="quantity <= 1"
-                            @click="decrementQty"
-                        >-</button>
-                        <span>{{ quantity }}</span>
-                        <button type="button"
-                            @click="incrementQty"
-                        >+</button>
-                        <button type="button"
-                            @click="$emit('remove-item', order.id)"
-                        >Remove</button>
-                    </span>
-                </div>
-                <div class="order-item-options"
-                    v-for="(option) in order.options"
+            <div class="order-list">
+                <div class="order-item"
+                    v-for="item in items"
                 >
-                    <span>{{ option.name }}: </span>
-                    <label
-                        v-for="(optionValue, index) in option.values"
+                    <div class="order-quantity">
+                        <span>
+                            <b>{{ item.name }}</b> ({{ item.price }})
+                            <button
+                                :disabled="item.quantity <= 1"
+                                @click="$emit('decrement-qty', item.id)"
+                            >-</button>
+                            {{ item.quantity }}
+                            <button
+                                @click="$emit('increment-qty', item.id)"
+                            >+</button>
+                            <button
+                                @click="$emit('remove-item', item.id)"
+                            >Remove</button>
+                        </span>
+                    </div>
+                    <div class="order-options"
+                        v-for="option in item.availableOptions"
                     >
-                        <input type="radio"
-                            :name="option.name"
-                            :value="index"
-                            v-model="orderOptions[option.name]"
-                            @change="$emit('update-options', {id: order.id, options: orderOptions})"/>
-                        {{ optionValue }}
-                    </label>
+                        <div class="option-name">
+                            {{ option.name | capitalize }}: 
+                            <label
+                                v-for="(choice, index) in option.values"   
+                            >
+                                <input class="option"
+                                    type="radio"
+                                    :name="option.name"
+                                    :value="index"
+                                    @change="$emit('choose-option', {
+                                        id: item.id,
+                                        option: option.name,
+                                        value: index
+                                    })"
+                                >
+                                    {{ choice | capitalize }}
+                                </input>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-                <button @click="debug">debug</button>
             </div>
         `,
-    }); 
-    
+    });
+
     var app = new Vue({
-        el: "#chefcatte",
+        el: '#chefcatte',
         data: {
             items: items,
             categories: categories,
-            orders: [items[0]],
+            orders: [],
+        },
+        computed: {
+            totalPrice: function() {
+                return this.orders.reduce((subtotal, order) => {
+                    return subtotal + (order.price * order.quantity);
+                }, 0);
+            },
         },
         filters: {
-            categorize: function(items, category) {
+            categorize: function (items, category) {
                 return items.filter(
                     item => item.category === category
                 );
             },
-            convertCamelCase: function (string) {
-                return string
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, function(str) {return str.toUpperCase();});
-            },
         },
         methods: {
-            addOrderItem: function(id) {
-                if (this.orders.filter(item => item.id === id).length === 0) {
-                    this.orders.push(items[id]);
+            addOrder(itemId) {
+                if (this.orders.findIndex(o => o.id === items[itemId].id) === -1) {
+                    var item = items[itemId];
+                    var order = {
+                        id: item.id,
+                        name: item.name,
+                        quantity: 1,
+                        price: item.price,
+                        availableOptions: item.options,
+                        chosenOptions: {},
+                    };
+                    this.orders.push(order);
                 } else {
-                    alert('That item already exists in your cart.');
+                    alert('That item is already in your cart.');
                 }
             },
-            removeOrderItem: function(id) {
-                this.orders.splice(this.orders.indexOf(items[id]), 1);
+            decrementOrder(itemId) {
+                var i = this.orders.findIndex(o => o.id === itemId);
+                this.orders[i].quantity--;
             },
-            submit: function() {
-                for (var order in this.orders) {
-                    for (var option in order.options) {
-                        if (option.value === null) {
-                            alert('Please select your options');
+            incrementOrder(itemId) {
+                var i = this.orders.findIndex(o => o.id === itemId);
+                this.orders[i].quantity++;
+            },
+            removeOrder(itemId) {
+                var i = this.orders.findIndex(o => o.id === itemId);
+                if (i !== -1) {
+                    this.orders.splice(i, 1);
+                }
+            },
+            chooseOption(choice) {
+                var i = this.orders.findIndex(o => o.id === choice.id);
+                this.orders[i].chosenOptions[choice.option] = choice.value;
+            },
+            submitOrder() {
+                var valid = true;
+                this.orders.forEach(order => {
+                    order.availableOptions.forEach(option => {
+                        if (!order.chosenOptions[option.name]) {
+                            alert('Please choose an option for your ' + order.name + '\'s ' + option.name + '.');
+                            valid = false;
                         }
-                    }
+                    });
+                });
+                if (!valid) {
+                    return;
                 }
-                console.log('success! your orders are: ' + JSON.stringify(orders));
-            },
-            debug: function() {
-                console.log(JSON.stringify(this.items));
+                var submission = this.orders.map(
+                    order => {
+                        return {
+                            id: order.id,
+                            name: order.name,
+                            quantity: order.quantity,
+                            chosenOptions: order.chosenOptions,
+                        };
+                    }
+                );
+                alert('Success! Order is: ' + JSON.stringify(submission));
             }
         },
-        computed: {},
-        components: {},
         template: `
-            <div>
-                <div v-for="category in categories">
-                    <menu-category
-                        v-bind:category="category | convertCamelCase"
-                        v-bind:items="items | categorize(category)"
-                        v-on:add-item="addOrderItem"
-                    ></menu-category>
-                </div>
-                <hr v-show="orders.length > 0">
+            <div class="order-form">
+                <menu-category
+                    v-for="category in categories"
+                    :category="category"
+                    :items="items | categorize(category)"
+                    @add-item="addOrder"
+                ></menu-category>
                 <order-list
-                    v-bind:items="orders"
-                    v-on:remove-item="removeOrderItem"
+                    :items="orders"
+                    @decrement-qty="decrementOrder"
+                    @increment-qty="incrementOrder"
+                    @remove-item="removeOrder"
+                    @choose-option="chooseOption"
                 ></order-list>
-                <button @click="submit">hello!</button>
+                <div class="checkout"
+                    v-show="orders.length >= 1"
+                >
+                    <span class="total-price">Total: {{ totalPrice }}</span>
+                    <button class="submit-order-btn"
+                        @click="submitOrder"
+                    >Submit</button>
+                </div>
             </div>
-        `
+        `,
     });
 
-};
+}
